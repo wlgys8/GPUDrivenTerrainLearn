@@ -234,7 +234,7 @@ namespace GPUDrivenTerrainLearn
         private void LogPatchArgs(){
             var data = new uint[5];
             _patchIndirectArgs.GetData(data);
-            // Debug.Log(data[1]);
+            Debug.Log(data[1]);
         }
 
  
@@ -306,7 +306,7 @@ namespace GPUDrivenTerrainLearn
             }
             Graphics.ExecuteCommandBuffer(_commandBuffer);
 
-            this.LogPatchArgs();
+            // this.LogPatchArgs();
         }
 
         public ComputeBuffer patchIndirectArgs{
