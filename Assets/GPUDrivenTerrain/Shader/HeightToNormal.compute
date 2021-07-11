@@ -1,0 +1,31 @@
+#pragma kernel CSMain
+
+Texture2D<float4> HeightTex;
+RWTexture2D<float4> NormalTex;
+
+float3 GetPosition(uint2 coord){
+    uint w,h;
+    HeightTex.GetDimensions(w,h);
+    float height = HeightTex[coord].r;
+    return float3(coord.x * 1.0 / w,height,coord.y * 1.0/h); 
+}
+
+float3 GetNormal(float3 v1,float3 v2){
+    return normalize(-cross(v1,v2)).xyz;
+}
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    uint2 coord = id.xy;
+    float3 p0 = GetPosition(coord);
+    float3 v1 = GetPosition(coord + uint2(1,0)) - p0;
+    float3 v2 = GetPosition(coord + uint2(0,1)) - p0;
+    float3 v3 = GetPosition(coord + uint2(-1,0)) - p0;
+    float3 v4 = GetPosition(coord + uint2(0,-1)) - p0;
+
+    float3 normal = GetNormal(v1,v2) + GetNormal(v2,v3) + GetNormal(v3,v4) + GetNormal(v4,v1);
+    normal = normalize(normal);
+    normal = (normal + 1) * 0.5;
+    NormalTex[coord] = float4(normal.xzy,1);
+}

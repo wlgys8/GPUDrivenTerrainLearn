@@ -1,0 +1,13 @@
+
+#pragma kernel CSMain
+
+RWTexture2D<float4> QuadTreeMap;
+int NodeIDOffset;
+uint MapSize;
+
+[numthreads(5,5,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    uint nodeId = NodeIDOffset + id.y * MapSize + id.x;
+    QuadTreeMap[id.xy] = nodeId / 65535.0;
+}

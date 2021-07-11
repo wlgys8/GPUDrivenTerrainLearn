@@ -1,0 +1,40 @@
+///从高度图中提取Patch的min&max高度值用作视锥裁剪。
+///以及四叉树每个节点的min&max高度值，用作节点评价
+///整个世界的Patch个数应该是1280*1280。
+
+#pragma kernel PatchMinMaxHeight
+#pragma kernel PatchMinMaxHeightMapMip
+
+Texture2D<float4> HeightTex;
+RWTexture2D<float4> PatchMinMaxHeightTex;
+
+
+[numthreads(8,8,1)]
+void PatchMinMaxHeight (uint3 id : SV_DispatchThreadID)
+{
+
+    float h1 = HeightTex[id.xy].r;
+    float h2 = HeightTex[id.xy + uint2(1,0)].r;
+    float h3 = HeightTex[id.xy + uint2(0,1)].r;
+    float h4 = HeightTex[id.xy + uint2(1,1)].r;
+
+    float hmin = min(min(h1,h2),min(h3,h4));
+    float hmax = max(max(h1,h2),max(h3,h4));
+    PatchMinMaxHeightTex[id.xy].rgba = float4(hmin,hmax,0,1);
+}
+
+Texture2D<float4> InTex;
+RWTexture2D<float4> ReduceTex;
+[numthreads(5,5,1)]
+void PatchMinMaxHeightMapMip(uint3 id : SV_DispatchThreadID){
+
+    uint2 inLoc = id.xy * 2;
+    float2 h1 = InTex[inLoc].rg;
+    float2 h2 = InTex[inLoc + uint2(1,0)].rg;
+    float2 h3 = InTex[inLoc + uint2(0,1)].rg;
+    float2 h4 = InTex[inLoc + uint2(1,1)].rg;
+
+    float hmin = min(min(h1.r,h2.r),min(h3.r,h4.r));
+    float hmax = max(max(h1.g,h2.g),max(h3.g,h4.g));
+    ReduceTex[id.xy] = float4(hmin,hmax,0,1);
+}   

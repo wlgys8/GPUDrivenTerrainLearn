@@ -1,0 +1,36 @@
+
+
+#pragma kernel CSMain
+
+#pragma multi_compile_local __ _REVERSE_Z
+
+Texture2D<float4> InTex;
+RWTexture2D<float4> ReduceTex;
+uniform uint _Mip;
+
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    uint width,height;
+    ReduceTex.GetDimensions(width,height);
+
+    uint srcWidth,srcHeight,numersOfLevel;
+    InTex.GetDimensions(_Mip - 1,srcWidth,srcHeight,numersOfLevel);
+
+    if(id.x < srcWidth && id.y < srcHeight){
+        uint2 coord = 2 * id.xy;
+        float d1 = InTex.mips[_Mip-1][coord].r;
+        float d2 = InTex.mips[_Mip-1][coord + uint2(1,0)].r;
+        float d3 = InTex.mips[_Mip-1][coord + uint2(0,1)].r;
+        float d4 = InTex.mips[_Mip-1][coord + uint2(1,1)].r;
+        #if  _REVERSE_Z
+        //近大远小
+        ReduceTex[id.xy] = min(min(d1,d2),min(d3,d4));
+        #else
+        ReduceTex[id.xy] = max(max(d1,d2),max(d3,d4));
+        #endif
+    }
+    
+}
+
