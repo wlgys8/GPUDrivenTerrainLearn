@@ -50,7 +50,7 @@ namespace GPUDrivenTerrainLearn
             _asset = asset;
             _computeShader = asset.computeShader;
             _commandBuffer.name = "TerrainBuild";
-            _culledPatchBuffer = new ComputeBuffer(_maxNodeBufferSize * 64,PatchStripSize,ComputeBufferType.Append|ComputeBufferType.Counter);
+            _culledPatchBuffer = new ComputeBuffer(_maxNodeBufferSize * 64,PatchStripSize,ComputeBufferType.Append);
             
             _patchIndirectArgs = new ComputeBuffer(5,4,ComputeBufferType.IndirectArguments);
             _patchIndirectArgs.SetData(new uint[]{TerrainAsset.patchMesh.GetIndexCount(0),0,0,0,0});
@@ -58,11 +58,11 @@ namespace GPUDrivenTerrainLearn
             _patchBoundsIndirectArgs = new ComputeBuffer(5,4,ComputeBufferType.IndirectArguments);
             _patchBoundsIndirectArgs.SetData(new uint[]{TerrainAsset.unitCubeMesh.GetIndexCount(0),0,0,0,0});
 
-            _maxLODNodeList = new ComputeBuffer(TerrainAsset.MAX_LOD_NODE_COUNT * TerrainAsset.MAX_LOD_NODE_COUNT,8,ComputeBufferType.Append|ComputeBufferType.Counter|ComputeBufferType.Structured);
+            _maxLODNodeList = new ComputeBuffer(TerrainAsset.MAX_LOD_NODE_COUNT * TerrainAsset.MAX_LOD_NODE_COUNT,8,ComputeBufferType.Append);
             this.InitMaxLODNodeListDatas();
 
-            _nodeListA = new ComputeBuffer(_tempNodeBufferSize,8,ComputeBufferType.Append|ComputeBufferType.Counter|ComputeBufferType.Structured);
-            _nodeListB = new ComputeBuffer(_tempNodeBufferSize,8,ComputeBufferType.Append|ComputeBufferType.Counter|ComputeBufferType.Structured);
+            _nodeListA = new ComputeBuffer(_tempNodeBufferSize,8,ComputeBufferType.Append);
+            _nodeListB = new ComputeBuffer(_tempNodeBufferSize,8,ComputeBufferType.Append);
             _indirectArgsBuffer = new ComputeBuffer(3,4,ComputeBufferType.IndirectArguments);
             _indirectArgsBuffer.SetData(new uint[]{1,1,1});
             _finalNodeListBuffer = new ComputeBuffer(_maxNodeBufferSize,12,ComputeBufferType.Append);
