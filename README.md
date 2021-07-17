@@ -657,3 +657,31 @@ Patch的LOD Transitions计算位于裁剪工作之后。所谓LOD Transitions的
 
 
 后面有空再补充吧。
+
+
+# 6. 一些补充说明
+
+这个Demo我是在mac上开发的，后来得到一些反馈说Windows上有问题，后来我到Windows跑了一下，并做了修复，相关问题罗列于此。
+
+## 6.1 ComputeBufferType问题
+
+Unity中的ComputeBufferType枚举是Flags类型的，创建ComputeBuffer的时候要指定。我想当然的认为要通过`|`操作符来组合，因此使用了ComputeBufferType.Append|ComputeBufferType.Counter这种方式。在Mac上跑的时候没有问题，但是到windows会出错，然后Crash。现在看来应该是直接使用ComputeBufferType.Append就好了，Append本身就包含了Counter特性。
+
+## 6.2 HizMap生成问题
+
+在mac上实现的时候，我是直接将HizMap作为输入，然后将HizMap指定的mip级别作为输出。这样就无需分配额外的RenderTexture。CS实现大致如下:
+
+```hlsl
+float d1 = InTex.mips[_Mip-1][coord].r;
+float d2 = InTex.mips[_Mip-1][coord + uint2(1,0)].r;
+float d3 = InTex.mips[_Mip-1][coord + uint2(0,1)].r;
+float d4 = InTex.mips[_Mip-1][coord + uint2(1,1)].r;
+float d = min(min(d1,d2),min(d3,d4));
+MipTex[id.xy] = d;
+```
+
+这里InTex和MipTex都对应同一张HizMap，但是这种方式在Windows不行，无法将一张贴图同时作为输入和输出。作为初学萌新，不知道这是底层图形库之间的区别(metal|DX)还是硬件的区别？这两天梯子倒了，暂时无法翻墙查资料，很痛苦。
+
+目前在Win平台上采用了分配额外的RT进行PingPong来生成HizMap.
+
+
