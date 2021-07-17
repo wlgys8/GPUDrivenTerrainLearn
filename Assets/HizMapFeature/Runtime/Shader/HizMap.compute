@@ -1,34 +1,55 @@
 
 
+#pragma kernel Blit
 #pragma kernel CSMain
 
 #pragma multi_compile_local __ _REVERSE_Z
+#pragma multi_compile_local __ _PING_PONG_COPY
 
 Texture2D<float4> InTex;
-RWTexture2D<float4> ReduceTex;
+RWTexture2D<float4> MipCopyTex;
+RWTexture2D<float4> MipTex;
+
+uniform float2 _SrcTexSize;
+uniform float2 _DstTexSize;
 uniform uint _Mip;
 
+[numthreads(8,8,1)]
+void Blit (uint3 id : SV_DispatchThreadID){
+
+    uint2 srcXY = floor(id.xy * _SrcTexSize /_DstTexSize);
+    MipTex[id.xy] = InTex[srcXY];
+    #if _PING_PONG_COPY
+    MipCopyTex[id.xy] = InTex[srcXY];
+    #endif
+}
 
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    uint width,height;
-    ReduceTex.GetDimensions(width,height);
-
-    uint srcWidth,srcHeight,numersOfLevel;
-    InTex.GetDimensions(_Mip - 1,srcWidth,srcHeight,numersOfLevel);
-
-    if(id.x < srcWidth && id.y < srcHeight){
+    if(id.x < _DstTexSize.x && id.y < _DstTexSize.y){
         uint2 coord = 2 * id.xy;
+        #if _PING_PONG_COPY
+        float d1 = InTex[coord].r;
+        float d2 = InTex[coord + uint2(1,0)].r;
+        float d3 = InTex[coord + uint2(0,1)].r;
+        float d4 = InTex[coord + uint2(1,1)].r;
+        #else
         float d1 = InTex.mips[_Mip-1][coord].r;
         float d2 = InTex.mips[_Mip-1][coord + uint2(1,0)].r;
         float d3 = InTex.mips[_Mip-1][coord + uint2(0,1)].r;
         float d4 = InTex.mips[_Mip-1][coord + uint2(1,1)].r;
+        #endif
         #if  _REVERSE_Z
         //近大远小
-        ReduceTex[id.xy] = min(min(d1,d2),min(d3,d4));
+        float d = min(min(d1,d2),min(d3,d4));
         #else
-        ReduceTex[id.xy] = max(max(d1,d2),max(d3,d4));
+        float d = max(max(d1,d2),max(d3,d4));
+        #endif
+
+        MipTex[id.xy] = d;
+        #if _PING_PONG_COPY
+        MipCopyTex[id.xy] = d;
         #endif
     }
     
